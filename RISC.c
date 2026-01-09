@@ -101,187 +101,188 @@ int main(int argc, char *argv[]) {
     cpu.REG[PC] = 0x0000;
 
    while(true)  {
-      uint16_t address;
-      uint16_t line;
-      scanf("%d", &address);
-      scanf("%d", &line);
+    uint16_t address;
+    uint16_t line;
+    scanf("%d", &address);
+    scanf("%d", &line);
 
-      cpu.MEM[address] = line;
-      if(line == 0xFFFF)  {
-         break;
-      }
-   }
+    cpu.MEM[address] = line;
+    if(line == 0xFFFF)  {
+        break;
+    }
+}
+
    bool loop = true;
    while(loop)  {
-      cpu.REG[IR] = cpu.MEM[cpu.REG[PC]];
+      cpu.IR = cpu.MEM[cpu.REG[PC]];
       cpu.REG[PC] ++;
 
-      uint16_t opc = cpu.REG[IR] & 0x000F; 
+      uint16_t opc = cpu.IR & 0x000F; 
 
       switch(opc)  {
          case IEMAS_JMP:
-            uint16_t imm = cpu.REG[IR] & 0xFFF0;
+            uint16_t imm = cpu.IR & 0xFFF0;
             uint16_t imm = ((int16_t) imm) >> 4;
 
             cpu.REG[PC] += imm;
             break;
          case IEMAS_JGE:
-            uint16_t type = cpu.REG[IR] & 0x3000;
-            uint16_t imm = cpu.REG[IR] & 0x3FF0;
+            uint16_t type = cpu.IR & 0x3000;
+            uint16_t imm = cpu.IR & 0x3FF0;
             uint16_t imm =  imm << 2;
             uint16_t imm = ((int16_t) imm) >> 4;
 
             cpu.REG[PC] = imm;
             if(type == 0)  {
-               if(getZeroFlag())  {
+               if(getZeroFlag(cpu))  {
                   cpu.REG[PC] = imm;
                }
             } else if(type == 1) {
-               if(!getZeroFlag())  {
+               if(!getZeroFlag(cpu))  {
                   cpu.REG[PC] = imm;
                }
             } else if(type == 2) {
-               if(getCarryFlag())  {
+               if(getCarryFlag(cpu))  {
                   cpu.REG[PC] = imm;
                }
             } else  {
-               if(!getCarryFlag())  {
+               if(!getCarryFlag(cpu))  {
                   cpu.REG[PC] = imm;
                }
             }
             break;
          case IEMAS_LDR:
-            uint16_t imm = cpu.REG[IR] & 0x00F0;
+            uint16_t imm = cpu.IR & 0x00F0;
             uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = cpu.MEM[rm+imm];
             break;
          case IEMAS_STR:
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t imm = cpu.REG[IR] & 0xF000;
+            uint16_t imm = cpu.IR & 0xF000;
             uint16_t imm = ((int16_t) imm) >> 12;
 
 
             cpu.MEM[rm+imm] = rn;
             break;
          case IEMAS_MOV:
-            uint16_t imm = cpu.REG[IR] & 0x00F0;
+            uint16_t imm = cpu.IR & 0x00F0;
             uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
             
             cpu.REG[rd] = imm;
             break;
          case IEMAS_ADD:
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = cpu.REG[rm] + cpu.REG[rd];
             break;
          case IEMAS_SUB:
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = cpu.REG[rm] - cpu.REG[rd];
             break;
          case IEMAS_AND:
 
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = cpu.REG[rm] & cpu.REG[rd];
             break;
          case IEMAS_OR:
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = cpu.REG[rm] | cpu.REG[rd];
             break;
          case IEMAS_ADDI:
-            uint16_t imm = cpu.REG[IR] & 0x00F0;
+            uint16_t imm = cpu.IR & 0x00F0;
             uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = rm+imm;
             break;
          case IEMAS_SUBI:
-            uint16_t imm = cpu.REG[IR] & 0x00F0;
+            uint16_t imm = cpu.IR & 0x00F0;
             uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = rm-imm;
             break;
          case IEMAS_SHR:
-             uint16_t imm = cpu.REG[IR] & 0x00F0;
+             uint16_t imm = cpu.IR & 0x00F0;
             uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = rm << imm;
             break;
          case IEMAS_SHL:
-            uint16_t imm = cpu.REG[IR] & 0x00F0;
+            uint16_t imm = cpu.IR & 0x00F0;
             uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.REG[rd] = rm >> imm;
             break;
          case IEMAS_CMP:
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.REG[IR] & 0x0F00;
+            uint16_t rm = cpu.IR & 0x0F00;
             uint16_t rm = rm >> 8;
             
             cpu.MEM[FLAG_Z] = rm == rn;
             cpu.MEM[FLAG_C] = rm > rn;
             break;
          case IEMAS_PUSH:
-            uint16_t rn = cpu.REG[IR] & 0x00F0;
+            uint16_t rn = cpu.IR & 0x00F0;
             uint16_t rn = rn >> 4;
 
             cpu.REG[SP] --;
             cpu.MEM[cpu.REG[SP]] = rn;
             break;
-         case IEAMAS_POP:
-            if(cpu.REG[IR] == 0xFFFF)  { // HALT
+         case IEMAS_POP:
+            if(cpu.IR == 0xFFFF)  { // HALT
                loop = false;
                break;
             }
-            uint16_t rd = cpu.REG[IR] & 0xF000;
+            uint16_t rd = cpu.IR & 0xF000;
             uint16_t rd = rd >> 12;
 
             cpu.MEM[rd] = cpu.MEM[cpu.REG[SP]];
