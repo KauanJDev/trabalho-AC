@@ -29,27 +29,27 @@ typedef struct {
 //intrucoes
 enum {
     IEMAS_JMP  = 0x0,
-    IEMAS_JCND = 0x1,
+    IEMAS_JCO  = 0x1,
 
-    IEMAS_ADDI = 0x2,
-    IEMAS_SUBI = 0x3,
-    IEMAS_LDR  = 0x4,
-    IEMAS_SHR  = 0x5,
-    IEMAS_SHL  = 0x6,
+    IEMAS_LDR  = 0x2,
+    IEMAS_STR  = 0x3,
+    IEMAS_MOV  = 0x4,
 
-    IEMAS_STR  = 0x7,
-    IEMAS_MOV  = 0x8,
+    IEMAS_ADD  = 0x5,
+    IEMAS_ADDI = 0x6,
+    IEMAS_SUB  = 0x7,
+    IEMAS_SUBI = 0x8,
+    IEMAS_AND  = 0x9,
+    IEMAS_OR   = 0xA,
+    IEMAS_SHR  = 0xB,
+    IEMAS_SHL  = 0xC,
 
-    IEMAS_ADD  = 0x9,
-    IEMAS_SUB  = 0xA,
-    IEMAS_AND  = 0xB,
-    IEMAS_OR   = 0xC,
+
 
     IEMAS_CMP  = 0xD,
     IEMAS_PUSH = 0xE,
     IEMAS_POP  = 0xF,
 
-    IEMAS_JCO = 0001
 };
 
 void update_flags(IEMAS *cpu, uint32_t result) {
@@ -83,16 +83,17 @@ int main() {
       scanf("%hx", &breakpoints[i]);
    }
 
-   bool inputcheck = true;
-
-   while(inputcheck)  {
+   while(true)  {
       uint16_t address;
       uint16_t line;
 
       scanf("%hx", &address);
       scanf("%hx", &line);
 
-      inputcheck = !(address == 0x0000 && line == 0x0000);
+      if((address == 0x0000 && line == 0x0000)) {
+         break;
+      }
+
       cpu.MEM[address] = line;
    }
 
@@ -110,6 +111,9 @@ int main() {
       uint16_t rm = 0;
       uint16_t rd = 0;
       uint32_t result = 0;
+      printf("mem %hx\n", cpu.MEM[cpu.REG[PC]]);
+      printf("opc %hx\n", opc);
+      printf("ir %hx\n", cpu.IR);
 
       
 
@@ -153,6 +157,8 @@ int main() {
             rm = rm >> 8;
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
+            printf("%hx\n", imm);
+            printf("%hx\n", imm);
 
             cpu.REG[rd] = cpu.MEM[rm+imm];
             break;
