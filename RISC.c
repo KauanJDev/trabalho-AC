@@ -50,30 +50,57 @@ enum {
     IEMAS_PUSH = 0xE,
     IEMAS_POP  = 0xF,
 
-    IEMAS_JCO = 0001
+    IEMAS_JGE = 0001  // Z = 0 e C = 0
 };
 
-void update_flags(IEMAS *cpu, uint32_t result) {
-    cpu->FLAGS = 0;
+/*
+void load_program(CPU *cpu, const char *filename) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        perror("Erro ao abrir arquivo");
+        exit(1);
+    }
 
-    if ((result & 0xFFFF) == 0)
-        cpu->FLAGS |= FLAG_Z;
+    char line[256];
 
-    if (result > 0xFFFF)
-        cpu->FLAGS |= FLAG_C;
+    while (fgets(line, sizeof(line), f)) {
 
-}
+        char *p = line;
 
-bool is_breakpoint(uint16_t address) {
-    for (int i = 0; i < num_bp; i++) {
-        if (breakpoints[i] == address) {
-            return true;
+        while (isspace(*p)) p++;
+        if (*p == '\0' || *p == '/' || *p == ';')
+            continue;
+
+        unsigned addr, value;
+
+        if (sscanf(p, "%x %x", &addr, &value) == 2) {
+            cpu->MEM[addr & 0xFFFF] = value & 0xFFFF;
         }
     }
-    return false;
+
+    fclose(f);
+}
+*/
+
+bool getZeroFlag(IEMAS cpu)  {
+   return cpu.MEM[FLAG_Z];
+}
+bool getCarryFlag(IEMAS cpu)  {
+   return cpu.MEM[FLAG_C];
+}
+void setZeroFlag(IEMAS cpu, bool value)  {
+   cpu.REG[FLAG_Z] = (uint16_t) value;
+}
+void setCarryFlag(IEMAS cpu, bool value)  {
+   cpu.REG[FLAG_C] = (uint16_t) value;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Uso: %s programa.txt\n", argv[0]);
+        return 1;
+    }
+
     IEMAS cpu;
 
     cpu.REG[SP] = 0xFFFE;
