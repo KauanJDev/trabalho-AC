@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -80,20 +79,21 @@ int main() {
     cpu.REG[PC] = 0x0000;
 
     scanf("%d", &num_bp);
+   printf("asdas\n");
       for (int i = 0; i < num_bp; i++) {
          scanf("%hx", &breakpoints[i]);
     }
 
-   while(true)  {
+   printf("asdas\n");
+   bool inputcheck = true;
+   while(inputcheck)  {
     uint16_t address;
     uint16_t line;
     scanf("%hx", &address);
     scanf("%hx", &line);
-
     cpu.MEM[address] = line;
-    if(line == 0xFFFF)  {
-        break;
-    }
+      printf("%d\n", line == 0xFFFF && address == 0xFFFF);
+      inputcheck = !(line == 0xFFFF && address == 0xFFFF);
 }
 
    bool loop = true;
@@ -115,19 +115,24 @@ int main() {
 
       // DECODING & EXECUTION
       uint16_t opc = cpu.IR & 0x000F; 
+      uint16_t imm = 0;
+      uint16_t rn = 0;
+      uint16_t rm = 0;
+      uint16_t rd = 0;
+      uint32_t result = 0;
 
       switch(opc)  {
          case IEMAS_JMP:
-            uint16_t imm = cpu.IR & 0xFFF0;
-            uint16_t imm = ((int16_t) imm) >> 4;
+            imm = cpu.IR & 0xFFF0;
+            imm = ((int16_t) imm) >> 4;
 
             cpu.REG[PC] += imm;
             break;
          case IEMAS_JCO:
             uint16_t type = cpu.IR & 0x3000;
-            uint16_t imm = cpu.IR & 0x3FF0;
-            uint16_t imm =  imm << 2;
-            uint16_t imm = ((int16_t) imm) >> 4;
+            imm = cpu.IR & 0x3FF0;
+            imm =  imm << 2;
+            imm = ((int16_t) imm) >> 4;
 
             cpu.REG[PC] = imm;
             if(type == 0)  {
@@ -149,69 +154,69 @@ int main() {
             }
             break;
          case IEMAS_LDR:
-            uint16_t imm = cpu.IR & 0x00F0;
-            uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = rd >> 12;
+            imm = cpu.IR & 0x00F0;
+            imm = ((int16_t) imm) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = rm >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = rd >> 12;
 
             cpu.REG[rd] = cpu.MEM[rm+imm];
             break;
          case IEMAS_STR:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = rm >> 8;
-            uint16_t imm = cpu.IR & 0xF000;
-            uint16_t imm = ((int16_t) imm) >> 12;
+            rn = cpu.IR & 0x00F0;
+            rn = rn >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = rm >> 8;
+            imm = cpu.IR & 0xF000;
+            imm = ((int16_t) imm) >> 12;
 
 
             cpu.MEM[rm+imm] = rn;
             break;
          case IEMAS_MOV:
-            uint16_t imm = cpu.IR & 0x00F0;
-            uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = rd >> 12;
+            imm = cpu.IR & 0x00F0;
+            imm = ((int16_t) imm) >> 4;
+            rd = cpu.IR & 0xF000;
+            rd = rd >> 12;
             
             cpu.REG[rd] = imm;
             break;
          case IEMAS_ADD:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = ((int16_t) rn) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = ((int16_t) rm) >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = ((int16_t) rd) >> 12;
+            rn = cpu.IR & 0x00F0;
+            rn = ((int16_t) rn) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t) rd) >> 12;
             
-            int32_t result = cpu.REG[rm]+cpu.REG[rn];
+            result = cpu.REG[rm]+cpu.REG[rn];
 
             cpu.REG[rd] = result & 0xFFFF;
              
             update_flags(&cpu, result);
             break;
          case IEMAS_SUB:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = ((int16_t) rn) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = ((int16_t) rm) >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = ((int16_t) rd) >> 12;
+            rn = cpu.IR & 0x00F0;
+            rn = ((int16_t) rn) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t) rd) >> 12;
 
-            int32_t result = cpu.REG[rm]-cpu.REG[rn];
+            result = cpu.REG[rm]-cpu.REG[rn];
 
             cpu.REG[rd] = result & 0xFFFF;
 
             update_flags(&cpu, result);
             break;
          case IEMAS_AND:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = rd >> 12;
+            rn = cpu.IR & 0x00F0;
+            rn = ((int16_t) rn) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t) rd) >> 12;
 
             int32_t result = cpu.REG[rm]&cpu.REG[rn];
 
@@ -220,80 +225,80 @@ int main() {
             update_flags(&cpu, result);
             break;
          case IEMAS_OR:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = rd >> 12;
+            rn = cpu.IR & 0x00F0;
+            rn = ((int16_t) rn) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t) rd) >> 12;
 
-            int32_t result = cpu.REG[rm]|cpu.REG[rn];
+            result = cpu.REG[rm]|cpu.REG[rn];
 
             cpu.REG[rd] = result & 0xFFFF;
 
             update_flags(&cpu, result);
             break;
          case IEMAS_ADDI:
-            uint16_t imm = cpu.IR & 0x00F0;
-            uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = ((int16_t) rm) >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = ((int16_t)rd) >> 12;
+            imm = cpu.IR & 0x00F0;
+            imm = ((int16_t) imm) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t)rd) >> 12;
 
-            int32_t result = cpu.REG[rm]+imm;
+            result = cpu.REG[rm]+imm;
 
             cpu.REG[rd] = result & 0xFFFF;
 
             update_flags(&cpu, result);
             break;
          case IEMAS_SUBI:
-            uint16_t imm = cpu.IR & 0x00F0;
-            uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = ((int16_t) rm) >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = ((int16_t)rd) >> 12;
+            imm = cpu.IR & 0x00F0;
+            imm = ((int16_t) imm) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t)rd) >> 12;
 
-            int32_t result = cpu.REG[rm]-imm;
+            result = cpu.REG[rm]-imm;
 
             cpu.REG[rd] = result & 0xFFFF;
 
             update_flags(&cpu, result);
             break;
          case IEMAS_SHR:
-            uint16_t imm = cpu.IR & 0x00F0;
-            uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = ((int16_t) rm) >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = ((int16_t)rd) >> 12;
+            imm = cpu.IR & 0x00F0;
+            imm = ((int16_t) imm) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t)rd) >> 12;
 
-            int32_t result = cpu.REG[rm]<<imm;
+            result = cpu.REG[rm]<<imm;
 
             cpu.REG[rd] = result & 0xFFFF;
 
             update_flags(&cpu, result);
             break;
          case IEMAS_SHL:
-            uint16_t imm = cpu.IR & 0x00F0;
-            uint16_t imm = ((int16_t) imm) >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = rm >> 8;
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = rd >> 12;
+            imm = cpu.IR & 0x00F0;
+            imm = ((int16_t) imm) >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = ((int16_t) rm) >> 8;
+            rd = cpu.IR & 0xF000;
+            rd = ((int16_t)rd) >> 12;
 
-            int32_t result = cpu.REG[rm]>>imm;
+            result = cpu.REG[rm]>>imm;
 
             cpu.REG[rd] = result & 0xFFFF;
 
             update_flags(&cpu, result);
             break;
          case IEMAS_CMP:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = rn >> 4;
-            uint16_t rm = cpu.IR & 0x0F00;
-            uint16_t rm = rm >> 8;
+            rn = cpu.IR & 0x00F0;
+            rn = rn >> 4;
+            rm = cpu.IR & 0x0F00;
+            rm = rm >> 8;
 
             cpu.FLAGS = 0;
 
@@ -305,8 +310,8 @@ int main() {
             }
             break;
          case IEMAS_PUSH:
-            uint16_t rn = cpu.IR & 0x00F0;
-            uint16_t rn = rn >> 4;
+            rn = cpu.IR & 0x00F0;
+            rn = rn >> 4;
 
             cpu.REG[SP] --;
             cpu.MEM[cpu.REG[SP]] = rn;
@@ -316,8 +321,8 @@ int main() {
                loop = false;
                break;
             }
-            uint16_t rd = cpu.IR & 0xF000;
-            uint16_t rd = rd >> 12;
+            rd = cpu.IR & 0xF000;
+            rd = rd >> 12;
 
             cpu.MEM[rd] = cpu.MEM[cpu.REG[SP]];
             cpu.REG[SP] ++;
