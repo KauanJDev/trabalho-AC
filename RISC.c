@@ -72,9 +72,43 @@ bool is_breakpoint(uint16_t address) {
     return false;
 }
 
+bool ioIn(IEMAS *cpu, uint16_t address, uint16_t rd)  {
+   switch(address)  {
+      case 0xF000:{
+         scanf("%c", cpu->REG[rd]);
+         printf("IN => %c\n", cpu->REG[rd]);
+         return true;
+         break;
+      }
+      case 0xF002:{
+         scanf("%d", cpu->REG[rd]);
+         printf("IR => %d\n", cpu->REG[rd]);
+         return true;
+         break;
+      }
+   }
+   return false;
+}
+
+bool ioOut(IEMAS *cpu, uint16_t address, uint16_t rd)  {
+   switch(address)  {
+      case 0xF001:{
+         printf("OUT => %c\n", cpu->REG[rd]);
+         return true;
+         break;
+      }
+      case 0xF003:{
+         printf("OUT => %d\n", cpu->REG[rd]);
+         return true;
+         break;
+      }
+   }
+   return false;
+}
+
 int main() {
    IEMAS cpu = {0}; 
-   memset(&cpu.MEM, 0x0000, MEM_SIZE);
+   memset(cpu.MEM, 0, sizeof(cpu.MEM));
 
    cpu.REG[SP] = 0x2000;
    cpu.REG[PC] = 0x0000;
@@ -120,6 +154,7 @@ int main() {
       uint16_t rm = 0;
       uint16_t rd = 0;
       uint32_t result = 0;
+      
 
       
 
@@ -132,26 +167,27 @@ int main() {
             break;
          }
          case IEMAS_JCO: {
-            uint16_t type = cpu.IR & 0x3000;
-            imm = cpu.IR & 0x3FF0;
+            uint16_t type = cpu.IR & 0xC000; // 1100 0000 0000 0000 
+            type = type >> 14;
+            imm = cpu.IR & 0x3FF0; // 0011 1111 1111 0000
             imm =  imm << 2;
-            imm = ((int16_t) imm) >> 4;
+            imm =  ((int16_t)imm) >> 6;
          
             if(type == 0)  {
                if(cpu.FLAGS & FLAG_Z)  {
-                  cpu.REG[PC] = imm;
+                  cpu.REG[PC] += imm;
                }
             } else if(type == 1) {
                if(!(cpu.FLAGS & FLAG_Z))  {
-                  cpu.REG[PC] = imm;
+                  cpu.REG[PC] += imm;
                }
             } else if(type == 2) {
                if(cpu.FLAGS & FLAG_C)  {
-                  cpu.REG[PC] = imm;
+                  cpu.REG[PC] += imm;
                }
             } else  {
                if(!(cpu.FLAGS & FLAG_C))  {
-                  cpu.REG[PC] = imm;
+                  cpu.REG[PC] += imm;
                }
             }
             break;
@@ -164,7 +200,10 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
 
-            cpu.REG[rd] = cpu.MEM[rm+imm];
+
+            if(!ioIn(&cpu, imm+rm, rd))  {
+               cpu.REG[rd] = cpu.MEM[cpu.REG[rm]+imm];
+            }
             break;
          }
          case IEMAS_STR:{
@@ -176,7 +215,9 @@ int main() {
             imm = ((int16_t) imm) >> 12;
 
 
-            cpu.MEM[rm+imm] = cpu.REG[rn];
+            if(!ioOut(&cpu, imm+rm, rd))  {
+               cpu.MEM[cpu.REG[rm]+imm] = cpu.REG[rn];
+            }
             break;
          }
          case IEMAS_MOV:{
@@ -331,6 +372,7 @@ int main() {
             cpu.REG[SP] --;
             cpu.MEM[cpu.REG[SP]] = cpu.REG[rn];
             break;
+         }
          case IEMAS_POP: {
             if(cpu.IR == 0xFFFF)  {
                break;
@@ -343,7 +385,7 @@ int main() {
             break;
          }
       }
-   }
+   
 
       if(cpu.IR == 0xFFFF)  {
          loop = false;
