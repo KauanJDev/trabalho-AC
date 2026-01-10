@@ -126,18 +126,19 @@ int main() {
       }
 
       switch(opc)  {
-         case IEMAS_JMP:
+         case IEMAS_JMP: {
             imm = cpu.IR & 0xFFF0;
             imm = ((int16_t) imm) >> 4;
 
             cpu.REG[PC] += imm;
             break;
-         case IEMAS_JCO:
+         }
+         case IEMAS_JCO: {
             uint16_t type = cpu.IR & 0x3000;
             imm = cpu.IR & 0x3FF0;
             imm =  imm << 2;
             imm = ((int16_t) imm) >> 4;
-
+         
             if(type == 0)  {
                if(cpu.FLAGS & FLAG_Z)  {
                   cpu.REG[PC] = imm;
@@ -156,7 +157,8 @@ int main() {
                }
             }
             break;
-         case IEMAS_LDR:
+         }
+         case IEMAS_LDR:{
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -166,7 +168,8 @@ int main() {
 
             cpu.REG[rd] = cpu.MEM[rm+imm];
             break;
-         case IEMAS_STR:
+         }
+         case IEMAS_STR:{
             rn = cpu.IR & 0x00F0;
             rn = rn >> 4;
             rm = cpu.IR & 0x0F00;
@@ -177,7 +180,8 @@ int main() {
 
             cpu.MEM[rm+imm] = cpu.REG[rn];
             break;
-         case IEMAS_MOV:
+         }
+         case IEMAS_MOV:{
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rd = cpu.IR & 0xF000;
@@ -185,7 +189,8 @@ int main() {
             
             cpu.REG[rd] = imm;
             break;
-         case IEMAS_ADD:
+         }
+         case IEMAS_ADD: {
             rn = cpu.IR & 0x00F0;
             rn = ((int16_t) rn) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -199,7 +204,8 @@ int main() {
              
             update_flags(&cpu, result);
             break;
-         case IEMAS_SUB:
+         }
+         case IEMAS_SUB: {
             rn = cpu.IR & 0x00F0;
             rn = ((int16_t) rn) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -213,7 +219,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_AND:
+         }
+         case IEMAS_AND: {
             rn = cpu.IR & 0x00F0;
             rn = ((int16_t) rn) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -227,7 +234,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_OR:
+         }
+         case IEMAS_OR: {
             rn = cpu.IR & 0x00F0;
             rn = ((int16_t) rn) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -241,7 +249,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_ADDI:
+         }
+         case IEMAS_ADDI: {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -255,7 +264,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_SUBI:
+         }
+         case IEMAS_SUBI: {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -269,7 +279,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_SHR:
+         }
+         case IEMAS_SHR: {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -283,7 +294,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_SHL:
+         }
+         case IEMAS_SHL: {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
@@ -297,7 +309,8 @@ int main() {
 
             update_flags(&cpu, result);
             break;
-         case IEMAS_CMP:
+         }
+         case IEMAS_CMP: {
             rn = cpu.IR & 0x00F0;
             rn = rn >> 4;
             rm = cpu.IR & 0x0F00;
@@ -312,7 +325,8 @@ int main() {
                cpu.FLAGS |= FLAG_Z;
             }
             break;
-         case IEMAS_PUSH:
+         }
+         case IEMAS_PUSH: {
             rn = cpu.IR & 0x00F0;
             rn = rn >> 4;
 
@@ -326,9 +340,9 @@ int main() {
             cpu.REG[rd] = cpu.MEM[cpu.REG[SP]];
             cpu.REG[SP] ++;
             break;
+         }
      }
    }
-
 
     return 0;
 }
