@@ -78,22 +78,21 @@ int main() {
     cpu.REG[SP] = 0xFFFE;
     cpu.REG[PC] = 0x0000;
 
-    scanf("%d", &num_bp);
-   printf("asdas\n");
-      for (int i = 0; i < num_bp; i++) {
+   scanf("%d", &num_bp);
+   for (int i = 0; i < num_bp; i++) {
          scanf("%hx", &breakpoints[i]);
     }
 
-   printf("asdas\n");
    bool inputcheck = true;
    while(inputcheck)  {
-    uint16_t address;
-    uint16_t line;
-    scanf("%hx", &address);
-    scanf("%hx", &line);
-    cpu.MEM[address] = line;
-      printf("%d\n", line == 0xFFFF && address == 0xFFFF);
-      inputcheck = !(line == 0xFFFF && address == 0xFFFF);
+   uint16_t address;
+   uint16_t line;
+
+   scanf("%hx", &address);
+   scanf("%hx", &line);
+
+   cpu.MEM[address] = line;
+   inputcheck = line != 0xFFFF;
 }
 
    bool loop = true;
@@ -121,6 +120,11 @@ int main() {
       uint16_t rd = 0;
       uint32_t result = 0;
 
+      
+      if(cpu.IR == 0xFFFF)  {
+         loop = false;
+      }
+
       switch(opc)  {
          case IEMAS_JMP:
             imm = cpu.IR & 0xFFF0;
@@ -134,7 +138,6 @@ int main() {
             imm =  imm << 2;
             imm = ((int16_t) imm) >> 4;
 
-            cpu.REG[PC] = imm;
             if(type == 0)  {
                if(cpu.FLAGS & FLAG_Z)  {
                   cpu.REG[PC] = imm;
@@ -172,7 +175,7 @@ int main() {
             imm = ((int16_t) imm) >> 12;
 
 
-            cpu.MEM[rm+imm] = rn;
+            cpu.MEM[rm+imm] = cpu.REG[rn];
             break;
          case IEMAS_MOV:
             imm = cpu.IR & 0x00F0;
@@ -218,7 +221,7 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = ((int16_t) rd) >> 12;
 
-            int32_t result = cpu.REG[rm]&cpu.REG[rn];
+            result = cpu.REG[rm]&cpu.REG[rn];
 
             cpu.REG[rd] = result & 0xFFFF;
 
@@ -274,7 +277,7 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = ((int16_t)rd) >> 12;
 
-            result = cpu.REG[rm]<<imm;
+            result = cpu.REG[rm]>>imm;
 
             cpu.REG[rd] = result & 0xFFFF;
 
@@ -288,7 +291,7 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = ((int16_t)rd) >> 12;
 
-            result = cpu.REG[rm]>>imm;
+            result = cpu.REG[rm]<<imm;
 
             cpu.REG[rd] = result & 0xFFFF;
 
@@ -302,10 +305,10 @@ int main() {
 
             cpu.FLAGS = 0;
 
-            if(rm<rn)  {
+            if(cpu.REG[rm]<cpu.REG[rn])  {
                cpu.FLAGS |= FLAG_C;
             }
-            if(rn == rm)  {
+            if(cpu.REG[rm]==cpu.REG[rn])  {
                cpu.FLAGS |= FLAG_Z;
             }
             break;
@@ -314,21 +317,15 @@ int main() {
             rn = rn >> 4;
 
             cpu.REG[SP] --;
-            cpu.MEM[cpu.REG[SP]] = rn;
+            cpu.MEM[cpu.REG[SP]] = cpu.REG[rn];
             break;
          case IEMAS_POP:
-            if(cpu.IR == 0xFFFF)  { // HALT
-               loop = false;
-               break;
-            }
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
 
-            cpu.MEM[rd] = cpu.MEM[cpu.REG[SP]];
+            cpu.REG[rd] = cpu.MEM[cpu.REG[SP]];
             cpu.REG[SP] ++;
             break;
-            
-            
      }
    }
 
