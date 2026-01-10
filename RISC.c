@@ -65,7 +65,7 @@ void update_flags(IEMAS *cpu, uint32_t result) {
 
 bool is_breakpoint(uint16_t address) {
     for (int i = 0; i < num_bp; i++) {
-        if (breakpoints[i] == address) {
+        if (breakpoints[i]+1 == address) {
             return true;
         }
     }
@@ -80,36 +80,27 @@ int main() {
 
    scanf("%d", &num_bp);
    for (int i = 0; i < num_bp; i++) {
-         scanf("%hx", &breakpoints[i]);
-    }
+      scanf("%hx", &breakpoints[i]);
+   }
 
    bool inputcheck = true;
+
    while(inputcheck)  {
-   uint16_t address;
-   uint16_t line;
+      uint16_t address;
+      uint16_t line;
 
-   scanf("%hx", &address);
-   scanf("%hx", &line);
+      scanf("%hx", &address);
+      scanf("%hx", &line);
 
-   cpu.MEM[address] = line;
-   inputcheck = line != 0xFFFF;
-}
+      inputcheck = !(address == 0x0000 && line == 0x0000);
+      cpu.MEM[address] = line;
+   }
 
    bool loop = true;
    while(loop)  {
       // FETCH
       cpu.IR = cpu.MEM[cpu.REG[PC]];
 
-      if(is_breakpoint(cpu.REG[PC])) {
-         printf("<== IEMAS Registers ==>\n");
-         printf("PC = 0x%04X\n", cpu.REG[PC]);
-         printf("IR = 0x%04X\n", cpu.IR);
-         printf("FLAGS = 0x%02X\n", cpu.FLAGS);
-      for (int i = 0; i < 16; i++) {
-         printf("R%d = 0x%04X\n", i, cpu.REG[i]);
-      }
-        break;
-    }
       cpu.REG[PC] ++;
 
       // DECODING & EXECUTION
@@ -121,9 +112,6 @@ int main() {
       uint32_t result = 0;
 
       
-      if(cpu.IR == 0xFFFF)  {
-         loop = false;
-      }
 
       switch(opc)  {
          case IEMAS_JMP: {
@@ -333,7 +321,10 @@ int main() {
             cpu.REG[SP] --;
             cpu.MEM[cpu.REG[SP]] = cpu.REG[rn];
             break;
-         case IEMAS_POP:
+         case IEMAS_POP: {
+            if(cpu.IR == 0xFFFF)  {
+               break;
+            }
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
 
@@ -341,10 +332,27 @@ int main() {
             cpu.REG[SP] ++;
             break;
          }
-     }
+      }
    }
 
-    return 0;
+      if(cpu.IR == 0xFFFF)  {
+         loop = false;
+      }
+      if(is_breakpoint(cpu.REG[PC])) {
+         printf("<== IEMAS Registers ==>\n");
+         printf("PC = 0x%04X\n", cpu.REG[PC]);
+         printf("IR = 0x%04X\n", cpu.IR);
+         printf("FLAGS = 0x%02X\n", cpu.FLAGS);
+
+         for (int i = 0; i < 16; i++) {
+            printf("R%d = 0x%04X\n", i, cpu.REG[i]);
+         }
+        break;
+      }
+   }
+
+
+   return 0;
 }
 
 
