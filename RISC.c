@@ -73,22 +73,30 @@ bool is_breakpoint(uint16_t address) {
 }
 
 int main() {
-    IEMAS cpu;
+   IEMAS cpu = {0}; 
+   memset(&cpu.MEM, 0x0000, MEM_SIZE);
 
-    cpu.REG[SP] = 0xFFFE;
-    cpu.REG[PC] = 0x0000;
+   cpu.REG[SP] = 0x2000;
+   cpu.REG[PC] = 0x0000;
 
    scanf("%d", &num_bp);
    for (int i = 0; i < num_bp; i++) {
       scanf("%hx", &breakpoints[i]);
    }
 
+   uint16_t address, buffer;
+    while(scanf("%hX %hX%*[^\n]", &address, &buffer) == 2) {
+      if(!address && !buffer) break;
+		cpu.MEM[address] = buffer;
+    }
+   /*
    while(true)  {
       uint16_t address;
       uint16_t line;
 
-      scanf("%hx", &address);
-      scanf("%hx", &line);
+      if (scanf("%hx %hx", &address, &line) != 2)  {
+        break;
+      }
 
       if((address == 0x0000 && line == 0x0000)) {
          break;
@@ -96,6 +104,7 @@ int main() {
 
       cpu.MEM[address] = line;
    }
+   */
 
    bool loop = true;
    while(loop)  {
@@ -111,9 +120,6 @@ int main() {
       uint16_t rm = 0;
       uint16_t rd = 0;
       uint32_t result = 0;
-      printf("mem %hx\n", cpu.MEM[cpu.REG[PC]]);
-      printf("opc %hx\n", opc);
-      printf("ir %hx\n", cpu.IR);
 
       
 
@@ -157,8 +163,6 @@ int main() {
             rm = rm >> 8;
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
-            printf("%hx\n", imm);
-            printf("%hx\n", imm);
 
             cpu.REG[rd] = cpu.MEM[rm+imm];
             break;
@@ -186,11 +190,11 @@ int main() {
          }
          case IEMAS_ADD: {
             rn = cpu.IR & 0x00F0;
-            rn = ((int16_t) rn) >> 4;
+            rn = rn >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm = rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t) rd) >> 12;
+            rd = rd >> 12;
             
             result = cpu.REG[rm]+cpu.REG[rn];
 
@@ -201,11 +205,11 @@ int main() {
          }
          case IEMAS_SUB: {
             rn = cpu.IR & 0x00F0;
-            rn = ((int16_t) rn) >> 4;
+            rn = rn >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm = rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t) rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]-cpu.REG[rn];
 
@@ -216,11 +220,11 @@ int main() {
          }
          case IEMAS_AND: {
             rn = cpu.IR & 0x00F0;
-            rn = ((int16_t) rn) >> 4;
+            rn = rn >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm = rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t) rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]&cpu.REG[rn];
 
@@ -231,11 +235,11 @@ int main() {
          }
          case IEMAS_OR: {
             rn = cpu.IR & 0x00F0;
-            rn = ((int16_t) rn) >> 4;
+            rn = rn >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm = rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t) rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]|cpu.REG[rn];
 
@@ -248,9 +252,9 @@ int main() {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm =  rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t)rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]+imm;
 
@@ -263,9 +267,9 @@ int main() {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm =  rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t)rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]-imm;
 
@@ -278,9 +282,9 @@ int main() {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm =  rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t)rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]>>imm;
 
@@ -293,9 +297,9 @@ int main() {
             imm = cpu.IR & 0x00F0;
             imm = ((int16_t) imm) >> 4;
             rm = cpu.IR & 0x0F00;
-            rm = ((int16_t) rm) >> 8;
+            rm = rm >> 8;
             rd = cpu.IR & 0xF000;
-            rd = ((int16_t)rd) >> 12;
+            rd = rd >> 12;
 
             result = cpu.REG[rm]<<imm;
 
@@ -345,7 +349,6 @@ int main() {
          loop = false;
       }
       if(is_breakpoint(cpu.REG[PC])) {
-         printf("<== IEMAS Registers ==>\n");
          printf("PC = 0x%04X\n", cpu.REG[PC]);
          printf("IR = 0x%04X\n", cpu.IR);
          printf("FLAGS = 0x%02X\n", cpu.FLAGS);
@@ -353,7 +356,6 @@ int main() {
          for (int i = 0; i < 16; i++) {
             printf("R%d = 0x%04X\n", i, cpu.REG[i]);
          }
-        break;
       }
    }
 
