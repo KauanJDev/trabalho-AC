@@ -72,40 +72,36 @@ bool is_breakpoint(uint16_t address) {
     return false;
 }
 
-bool ioIn(IEMAS *cpu, uint16_t address, uint16_t rd)  {
-   switch(address)  {
-      case 0xF000:{
-         scanf("%c", cpu->REG[rd]);
-         printf("IN => %c\n", cpu->REG[rd]);
-         return true;
-         break;
-      }
-      case 0xF002:{
-         scanf("%d", cpu->REG[rd]);
-         printf("IR => %d\n", cpu->REG[rd]);
-         return true;
-         break;
-      }
-   }
-   return false;
+bool ioIn(IEMAS *cpu, uint16_t addr, uint16_t rd) {
+   printf("addr %hx\n", addr);
+   printf("rd %hx\n", rd);
+    if (addr == 0xF000) {
+        int16_t r;
+        scanf(" %c", &r);
+        cpu->REG[rd] = r;
+        return true;
+    }
+    if (addr == 0xF002) {
+        int16_t r;
+        scanf("%d", &r);
+        cpu->REG[rd] = r;
+        return true;
+    }
+    return false;
 }
 
-bool ioOut(IEMAS *cpu, uint16_t address, uint16_t rd)  {
-   switch(address)  {
-      case 0xF001:{
-         printf("OUT => %c\n", cpu->REG[rd]);
-         return true;
-         break;
-      }
-      case 0xF003:{
-         printf("OUT => %d\n", cpu->REG[rd]);
-         return true;
-         break;
-      }
-   }
-   return false;
+bool ioOut(IEMAS *cpu, uint16_t addr, uint16_t rn) {
+    if (addr == 0xF001) {
+        printf("OUT => %c\n", cpu->REG[rn]);
+        return true;
+    }
+    if (addr == 0xF003) {
+        printf("OUT => %hx\n", cpu->REG[rn]);
+        return true;
+    }
+    return false;
 }
-
+ 
 int main() {
    IEMAS cpu = {0}; 
    memset(cpu.MEM, 0, sizeof(cpu.MEM));
@@ -200,10 +196,10 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
 
-
-            if(!ioIn(&cpu, imm+rm, rd))  {
+            if(!ioIn(&cpu, imm+cpu.REG[rm], rd))  {
                cpu.REG[rd] = cpu.MEM[cpu.REG[rm]+imm];
             }
+            printf("result %hx\n", cpu.REG[rd]);
             break;
          }
          case IEMAS_STR:{
@@ -215,9 +211,12 @@ int main() {
             imm = ((int16_t) imm) >> 12;
 
 
-            if(!ioOut(&cpu, imm+rm, rd))  {
+            printf("aaaaaaa %hx\n", imm+cpu.REG[rm]);
+            if(!ioOut(&cpu, imm+cpu.REG[rm], rn))  {
                cpu.MEM[cpu.REG[rm]+imm] = cpu.REG[rn];
             }
+            printf("str %d\n", cpu.REG[rn]);
+            printf("str addr %d\n", rn);
             break;
          }
          case IEMAS_MOV:{
@@ -237,9 +236,14 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
             
+            printf("rn %d rm %d\n", cpu.REG[rn], cpu.REG[rm]);
             result = cpu.REG[rm]+cpu.REG[rn];
+            printf("result add %hx\n", result);
+            printf("result massa %hx\n", result & 0xFFFF);
 
             cpu.REG[rd] = result & 0xFFFF;
+            printf("rd %hx\n", rd);
+            printf("rd conteudo %hx\n", cpu.REG[rd]);
              
             update_flags(&cpu, result);
             break;
