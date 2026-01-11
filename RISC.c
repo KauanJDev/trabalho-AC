@@ -122,8 +122,8 @@ bool ioOut(IEMAS *cpu, uint16_t addr, uint16_t rn) {
 int main() {
    IEMAS cpu = {0}; 
    memset(cpu.MEM, 0, sizeof(cpu.MEM));
-   //int hMemoryQtd = 0;
-   //uint16_t *handledMemory = malloc(hMemoryQtd * sizeof(uint16_t));
+   int hMemoryQtd = 0;
+   uint16_t *handledMemory = malloc(hMemoryQtd * sizeof(uint16_t));
 
    cpu.REG[SP] = 0x2000;
    cpu.REG[PC] = 0x0000;
@@ -197,6 +197,10 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
 
+            hMemoryQtd ++;
+            handledMemory = realloc(handledMemory, hMemoryQtd * sizeof(uint16_t));
+            handledMemory[hMemoryQtd-1]  = cpu.REG[rm]+imm;
+
             if(!ioIn(&cpu, imm+cpu.REG[rm], rd))  {
                cpu.REG[rd] = cpu.MEM[cpu.REG[rm]+imm];
             }
@@ -210,6 +214,9 @@ int main() {
             imm = cpu.IR & 0xF000;
             imm = ((int16_t) imm) >> 12;
 
+            hMemoryQtd ++;
+            handledMemory = realloc(handledMemory, hMemoryQtd * sizeof(uint16_t));
+            handledMemory[hMemoryQtd-1]  = cpu.REG[rm]+imm;
 
 
             if(!ioOut(&cpu, imm+cpu.REG[rm], rn))  {
@@ -393,8 +400,14 @@ int main() {
          }
          printf("Z = %d\n", cpu.FLAGS & FLAG_Z);
          printf("C = %d\n", cpu.FLAGS & FLAG_C);
-         printf("%hx\n", cpu.REG[SP]);
-         dump_memory(&cpu);
+         for (int i = 0; i < hMemoryQtd; i++) {
+            printf("[0x%04hX] = 0x%04hX\n", handledMemory[i], cpu.MEM[handledMemory[i]]);
+         }
+         if(cpu.REG[SP] != 0x2000)  {
+            for(int i = cpu.REG[SP]; i < 0x2000; i++)  {
+               printf("[0x%04hX] = 0x%04hX\n", i, cpu.MEM[handledMemory[i]]);
+            }
+         }
       }
    }
 
