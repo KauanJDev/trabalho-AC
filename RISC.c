@@ -16,7 +16,7 @@
 
 //breakpoints
 #define MAX_BP 16
-uint16_t breakpoints[MAX_BP];
+int breakpoints[MAX_BP];
 int num_bp = 0;
 
 typedef struct {
@@ -65,7 +65,7 @@ void update_flags(IEMAS *cpu, uint32_t result) {
 
 bool is_breakpoint(uint16_t address) {
     for (int i = 0; i < num_bp; i++) {
-        if (breakpoints[i]+1 == address) {
+        if (breakpoints[i] == address) {
             return true;
         }
     }
@@ -92,14 +92,12 @@ bool ioIn(IEMAS *cpu, uint16_t addr, uint16_t rd) {
         char r;
         scanf("%c", &r);
         cpu->REG[rd] = r;
-        printf("IN => %c\n", cpu->REG[rd]);
         return true;
     }
     if (addr == 0xF002) {
         int16_t r;
         scanf("%hu", &r);
         cpu->REG[rd] = r;
-        printf("IN => %d\n", cpu->REG[rd]);
         return true;
     }
     return false;
@@ -107,14 +105,21 @@ bool ioIn(IEMAS *cpu, uint16_t addr, uint16_t rd) {
 
 bool ioOut(IEMAS *cpu, uint16_t addr, uint16_t rn) {
     if (addr == 0xF001) {
-        printf("OUT <= %c\n", (char)cpu->REG[rn]);
+        printf("%c\n", (char)cpu->REG[rn]);
         return true;
     }
     if (addr == 0xF003) {
-        printf("OUT <= %d\n", cpu->REG[rn]);
+        printf("%d\n", cpu->REG[rn]);
         return true;
     }
     return false;
+}
+
+bool isIoAddr(uint16_t addr)  {
+   for (uint16_t i = 0xF000; i < 0xF004; i++) {
+      if(addr == i) return true;
+   }
+   return false;
 }
 
 
@@ -127,10 +132,11 @@ int main() {
 
    cpu.REG[SP] = 0x2000;
    cpu.REG[PC] = 0x0000;
+   uint16_t lastPC = 0x0000;
 
    scanf("%d", &num_bp);
    for (int i = 0; i < num_bp; i++) {
-      scanf("%hx", &breakpoints[i]);
+      scanf("%d", &breakpoints[i]);
    }
 
    uint16_t address, buffer;
@@ -143,6 +149,7 @@ int main() {
       // FETCH
       cpu.IR = cpu.MEM[cpu.REG[PC]];
 
+      lastPC = cpu.REG[PC];
       cpu.REG[PC] ++;
 
       // DECODING & EXECUTION
@@ -197,9 +204,11 @@ int main() {
             rd = cpu.IR & 0xF000;
             rd = rd >> 12;
 
-            hMemoryQtd ++;
-            handledMemory = realloc(handledMemory, hMemoryQtd * sizeof(uint16_t));
-            handledMemory[hMemoryQtd-1]  = cpu.REG[rm]+imm;
+            if(!(isIoAddr(cpu.REG[rm]+imm)))  {
+               hMemoryQtd ++;
+               handledMemory = realloc(handledMemory, hMemoryQtd * sizeof(uint16_t));
+               handledMemory[hMemoryQtd-1]  = cpu.REG[rm]+imm;
+            }
 
             if(!ioIn(&cpu, imm+cpu.REG[rm], rd))  {
                cpu.REG[rd] = cpu.MEM[cpu.REG[rm]+imm];
@@ -214,9 +223,11 @@ int main() {
             imm = cpu.IR & 0xF000;
             imm = ((int16_t) imm) >> 12;
 
-            hMemoryQtd ++;
-            handledMemory = realloc(handledMemory, hMemoryQtd * sizeof(uint16_t));
-            handledMemory[hMemoryQtd-1]  = cpu.REG[rm]+imm;
+            if(!(isIoAddr(cpu.REG[rm]+imm)))  {
+               hMemoryQtd ++;
+               handledMemory = realloc(handledMemory, hMemoryQtd * sizeof(uint16_t));
+               handledMemory[hMemoryQtd-1]  = cpu.REG[rm]+imm;
+            }
 
 
             if(!ioOut(&cpu, imm+cpu.REG[rm], rn))  {
@@ -394,7 +405,7 @@ int main() {
       if(cpu.IR == 0xFFFF)  {
          loop = false;
       }
-      if(is_breakpoint(cpu.REG[PC])) {
+      if(is_breakpoint(lastPC)) {
          for (int i = 0; i < 16; i++) {
             printf("R%d = 0x%04X\n", i, cpu.REG[i]);
          }
@@ -404,8 +415,8 @@ int main() {
             printf("[0x%04hX] = 0x%04hX\n", handledMemory[i], cpu.MEM[handledMemory[i]]);
          }
          if(cpu.REG[SP] != 0x2000)  {
-            for(int i = cpu.REG[SP]; i < 0x2000; i++)  {
-               printf("[0x%04hX] = 0x%04hX\n", i, cpu.MEM[handledMemory[i]]);
+            for (int i = 0x2000 - 1; i >= cpu.REG[SP]; i--) {
+               printf("[0x%04hX] = 0x%04hX\n", i, cpu.MEM[i]);
             }
          }
       }
@@ -414,5 +425,6 @@ int main() {
 
    return 0;
 }
+
 
 
