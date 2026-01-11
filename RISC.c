@@ -1,3 +1,4 @@
+// Anna Liz, Gabriel Fernandes, Sâmia, Kauan Ferreira, Kayky
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
