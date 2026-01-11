@@ -71,6 +71,21 @@ bool is_breakpoint(uint16_t address) {
     }
     return false;
 }
+void dump_memory(IEMAS *cpu) {
+
+    for (int i = 0; i < MEM_SIZE; i++) {
+        if (cpu->MEM[i] != 0 &&
+            (i < 0x2000)) {   // fora da pilha
+            printf("[0x%04X] = 0x%04X\n", i, cpu->MEM[i]);
+        }
+    }
+
+    if (cpu->REG[SP] != 0x2000) {
+        for (uint16_t addr = cpu->REG[SP]; addr < 0x2000; addr++) {
+            printf("[0x%04X] = 0x%04X\n", addr, cpu->MEM[addr]);
+        }
+    }
+}
 
 bool ioIn(IEMAS *cpu, uint16_t addr, uint16_t rd) {
     if (addr == 0xF000) {
@@ -101,10 +116,14 @@ bool ioOut(IEMAS *cpu, uint16_t addr, uint16_t rn) {
     }
     return false;
 }
+
+
  
 int main() {
    IEMAS cpu = {0}; 
    memset(cpu.MEM, 0, sizeof(cpu.MEM));
+   //int hMemoryQtd = 0;
+   //uint16_t *handledMemory = malloc(hMemoryQtd * sizeof(uint16_t));
 
    cpu.REG[SP] = 0x2000;
    cpu.REG[PC] = 0x0000;
@@ -190,6 +209,7 @@ int main() {
             rm = rm >> 8;
             imm = cpu.IR & 0xF000;
             imm = ((int16_t) imm) >> 12;
+
 
 
             if(!ioOut(&cpu, imm+cpu.REG[rm], rn))  {
@@ -373,6 +393,8 @@ int main() {
          }
          printf("Z = %d\n", cpu.FLAGS & FLAG_Z);
          printf("C = %d\n", cpu.FLAGS & FLAG_C);
+         printf("%hx\n", cpu.REG[SP]);
+         dump_memory(&cpu);
       }
    }
 
